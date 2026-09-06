@@ -383,7 +383,7 @@ def create_order(data):
                 total_cents,
                 created_at
             )
-            VALUES (?, ?, ?, 'NEW', ?, datetime('now'))
+            VALUES (?, ?, ?, 'NEW', ?, strftime('%Y-%m-%dT%H:%M:%S', 'now', 'localtime'))
             """,
             (
                 data.get("customer_id"),
