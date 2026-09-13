@@ -1,36 +1,14 @@
-# Restaurant API + OpenAPI Test Harness
+API + OpenAPI Test Harness
 
-## Overview
+A reusable OpenAPI-first HTTP interface harness backed by SQLite, implemented with a canonical Restaurant API.
 
-This project implements a Restaurant HTTP API backed by SQLite and validated against an OpenAPI contract.
-
-The project also contains a reusable test Harness that:
-
-- Validates the OpenAPI specification before the application starts.
-- Creates a clean SQLite database from `schema.sql` and `seed.sql`.
-- Starts the Flask API in a predictable local HTTP test mode.
-- Runs automated HTTP contract and business-rule tests.
-- Reports a clear PASS/FAIL result.
-- Stops the Flask API after the test run.
-
-The OpenAPI specification in `openapi.yaml` defines the HTTP interface used by the API and tests.
-
----
-
-## Technology
-
-- Python 3
-- Flask
-- SQLite
-- OpenAPI
-- openapi-core
-- pytest
-- requests
-- Git
+Product 005 extends the same OpenAPI contract with a generic OpenAPI-to-MCP gateway.
 
 ---
 
 ## Project Structure
+
+```text
 restaurant-api/
 │
 ├── openapi.yaml
@@ -71,193 +49,112 @@ restaurant-api/
 ├── run-mcp.sh
 ├── run-tests-mcp.sh
 └── README.md
+Product 004 — Restaurant OpenAPI + SQLite API
+Overview
 
+The Restaurant API is an OpenAPI-first Flask application backed by SQLite.
+
+The openapi.yaml contract defines the HTTP interface.
+
+openapi.yaml
+     ↓
+Flask REST API
+     ↓
+SQLite
+
+The reusable harness validates the OpenAPI specification, resets the database, starts the API, and runs HTTP tests.
+
+Technology
+Python 3
+Flask
+SQLite
+OpenAPI YAML
+openapi-core
+pytest
+HTTP requests
+Git
 Setup
-1. Open the project directory
 
-Open PowerShell or another terminal and move to the project directory.
+Create and activate a Python virtual environment:
 
-Example:
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
 
-cd D:\restaurant-api
-2. Create a virtual environment
+Install dependencies:
 
-If the virtual environment does not already exist:
-
-python -m venv venv
-3. Activate the virtual environment
-
-Windows PowerShell:
-
-.\venv\Scripts\Activate.ps1
-
-Windows Command Prompt:
-
-venv\Scripts\activate
-
-Linux/macOS:
-
-source venv/bin/activate
-4. Install dependencies
-python -m pip install -r requirements.txt
+pip install -r requirements.txt
 Database
 
-The application uses SQLite.
+The database is SQLite.
 
-The database file is:
-
-restaurant.db
-
-The database is disposable and can be recreated at any time.
-
-The database structure is defined in:
+The database schema is defined in:
 
 schema.sql
 
-Initial data is defined in:
+Initial seed data is defined in:
 
 seed.sql
-Reset the database
 
-Run:
+The harness resets the database before a test run so tests start from a clean state.
 
-python -m harness.reset_db
+Run the Restaurant API
 
-Expected output:
-
-Database reset: PASS
-
-The reset operation:
-
-Deletes the existing restaurant.db.
-Creates a new SQLite database.
-Applies schema.sql.
-Applies seed.sql.
-Enables SQLite foreign-key enforcement.
-
-This makes test runs deterministic.
-
-Running the API
-
-Start the Flask application with:
+Start the Flask API:
 
 python -m src.app
 
-The API runs locally at:
+The API runs locally on:
 
 http://127.0.0.1:5000
-
-Keep this terminal running while manually inspecting the API.
-
-To stop the API:
-
-Ctrl+C
-Inspecting the API
-
-The API can be inspected using:
-
-Browser
-curl
-PowerShell
-Postman
-Any HTTP client
-
-For example, after starting the API:
-
-curl http://127.0.0.1:5000/menu
-
-The OpenAPI contract is available in:
-
-openapi.yaml
 Required API Operations
-Method	Path	Operation
-GET	/menu	List menu
-GET	/menu/{id}	Get menu item
-POST	/customers	Create customer
-GET	/tables	List dining tables
-POST	/reservations	Create reservation
-GET	/reservations/{id}	Get reservation
-POST	/orders	Create order
-GET	/orders/{id}	Get order
-PATCH	/orders/{id}/status	Update order status
-GET	/customers/{id}/orders	List customer orders
-Running the Tests
-Validate OpenAPI
 
-Validate the OpenAPI specification with:
+The API implements these operations:
 
-python -m harness.validate_openapi
-
-Expected output:
-
-OpenAPI validation: PASS
-
-The OpenAPI specification must be valid before the API test suite is considered ready to run.
-
-Run pytest directly
-
-If the API is already running:
-
-python -m pytest -v
-
-The tests exercise the HTTP interface and validate responses against the OpenAPI contract.
-
-One-Command Test Harness
-
-The recommended way to run the complete test harness on Windows is:
-
-.\run-tests.ps1
-
-The harness performs these steps:
-
-1. Reset database
-2. Validate OpenAPI
-3. Start Flask API
-4. Wait for API startup
-5. Run HTTP tests
-6. Stop Flask API
-7. Report PASS or FAIL
-
-A successful run ends with:
-
-========================================
- TEST RESULT: PASS
-========================================
-
-The Bash runner can be used on Linux/macOS:
-
-./run-tests.sh
-Test Coverage
-
-The automated tests cover the required Restaurant API behavior.
-
+Operation ID	Method	Path
+listMenu	GET	/menu
+getMenuItem	GET	/menu/{id}
+createCustomer	POST	/customers
+listDiningTables	GET	/tables
+createReservation	POST	/reservations
+getReservation	GET	/reservations/{id}
+createOrder	POST	/orders
+getOrder	GET	/orders/{id}
+updateOrderStatus	PATCH	/orders/{id}/status
+listCustomerOrders	GET	/customers/{id}/orders
+Restaurant Business Rules
 Menu
-List menu items.
-Get a menu item.
-Handle a missing menu item.
-Customers
-Create a customer.
-Reject duplicate customer email addresses.
-Dining Tables
-List active dining tables.
-Reservations
-Create a reservation.
-Reject invalid party sizes.
-Reject reservations exceeding table capacity.
-Reject duplicate reservations for the same table and reservation time.
-Get a reservation.
+
+Menu prices are owned by the server/database.
+
+The client cannot choose the price used for an order.
+
+Unavailable menu items cannot be ordered.
+
 Orders
-Create an order.
-Validate menu item availability.
-Calculate prices using database menu prices.
-Calculate the server-side order total.
-Reject invalid quantities.
-Get an order with its order items.
-Preserve historical item prices.
-List orders belonging to a customer.
+
+Order totals are calculated by the backend:
+
+total = quantity × database menu price
+
+Historical order item prices are preserved.
+
+Customers
+
+Customer email addresses must be unique.
+
+Duplicate customer emails are rejected.
+
+Reservations
+
+The reservation party size must be greater than zero.
+
+The party size cannot exceed the selected table capacity.
+
+A dining table cannot have two active reservations at the same time.
+
 Order Status
 
-Supported statuses:
+Valid statuses:
 
 NEW
 PREPARING
@@ -265,387 +162,126 @@ READY
 COMPLETED
 CANCELLED
 
-Valid transitions:
+Allowed transitions:
 
-NEW -> PREPARING
-NEW -> CANCELLED
+NEW → PREPARING
+NEW → CANCELLED
 
-PREPARING -> READY
+PREPARING → READY
 
-READY -> COMPLETED
+READY → COMPLETED
 
-Invalid status transitions are rejected.
+Invalid transitions return an error.
 
-Business Rules
+Product 004 Harness
 
-The Restaurant API enforces the following rules.
+The harness is reusable and contains no Restaurant-specific business logic.
 
-Menu Pricing
-
-Order prices are taken from the SQLite database.
-
-The client cannot choose or override the menu item price.
-
-The order total is calculated by the server:
-
-total = sum(quantity × database menu price)
-Menu Availability
-
-Unavailable menu items cannot be ordered.
-
-Reservation Capacity
-
-The reservation party size must:
-
-party_size > 0
-
-and:
-
-party_size <= selected table seats
-Duplicate Reservations
-
-The same dining table cannot have two active reservations for the same reservation time.
-
-Historical Order Prices
-
-When an order is created, the menu price at that time is stored in order_items.
-
-Changing a menu item's current price must not change the historical price of an existing order.
-
-Order Status
-
-Only valid state transitions are accepted.
-
-NEW
- |
- +----> CANCELLED
- |
- v
-PREPARING
- |
- v
-READY
- |
- v
-COMPLETED
-Canonical Workflow
-
-The main Restaurant workflow can be exercised through the HTTP API in this order:
-
-Clean database
-     |
-     v
-GET /menu
-     |
-     v
-POST /customers
-     |
-     v
-GET /tables
-     |
-     v
-Choose a suitable table
-     |
-     v
-POST /reservations
-     |
-     v
-POST /orders
-     |
-     v
-GET /orders/{id}
-     |
-     v
-PATCH /orders/{id}/status
-     |
-     v
-PATCH /orders/{id}/status
-     |
-     v
-PATCH /orders/{id}/status
-     |
-     v
-PATCH /orders/{id}/status
-     |
-     v
-GET /customers/{id}/orders
-     |
-     v
-Full Harness PASS
-
-The normal order status workflow is:
-
-NEW
- |
- v
-PREPARING
- |
- v
-READY
- |
- v
-COMPLETED
-
-An order may also be cancelled from:
-
-NEW -> CANCELLED
-Adding a New Endpoint
-
-When adding a new endpoint, update the project in this order.
-
-1. Update the OpenAPI contract
-
-Add the endpoint to:
-
-openapi.yaml
-
-Define:
-
-HTTP method
-Path
-Operation ID
-Request parameters
-Request body
-Response status codes
-Response schemas
-Error responses where required
-
-The OpenAPI contract describes the HTTP interface.
-
-2. Update the Flask application
-
-Add the corresponding route in:
-
-src/app.py
-3. Implement the endpoint behavior
-
-Add or update the required application logic in:
-
-src/handlers.py
-
-Use the SQLite database layer in:
-
-src/db.py
-4. Add HTTP tests
-
-Add tests under:
-
-tests/
-
-Tests should call the HTTP endpoint rather than directly testing handler functions.
-
-5. Validate the OpenAPI specification
-
-Run:
-
-python -m harness.validate_openapi
-
-Expected result:
-
-OpenAPI validation: PASS
-6. Run the complete test harness
-
-Run:
-
-.\run-tests.ps1
-
-The endpoint should not be considered complete until the full test suite passes.
-
-Harness Design
-
-The Harness is separated from Restaurant-specific application logic.
-
-The main Harness responsibilities are:
+It performs:
 
 OpenAPI validation
-       |
-       v
-Database reset
-       |
-       v
+SQLite database reset
 API startup
-       |
-       v
-HTTP tests
-       |
-       v
-OpenAPI response validation
-       |
-       v
-PASS / FAIL
+HTTP testing
+Request/response contract validation
+Business-rule testing
+PASS/FAIL reporting
 
-The Harness is intended to be reusable for another HTTP backend by replacing the API-specific:
-
-OpenAPI specification
-Database schema
-Seed data
-API tests
-
-Restaurant-specific business rules belong to the application and its tests, not to the generic Harness.
-
-HTTP Contract Validation
-
-The Harness validates the real HTTP interface.
-
-For each tested HTTP response, the Harness checks the response against the OpenAPI contract, including:
-
-HTTP status code
-Response structure
-Response schema
-Required fields
-Field types
-
-When contract validation fails, the test output reports the related operation ID and validation error.
-
-This helps identify whether an endpoint is returning a response that does not match its declared API contract.
-
-Clean Test Runs
-
-Each complete test run is intended to start from a clean SQLite database.
-
-To manually reset the database:
-
-python -m harness.reset_db
-
-To run the complete clean workflow:
+Run the complete Product 004 test harness:
 
 .\run-tests.ps1
 
-The test suite should be repeatable from a fresh database.
+Or:
 
-Running the complete harness again should produce the same expected test result.
+./run-tests.sh
 
-Troubleshooting
-Python command not found
+The database is reset before testing.
 
-Check the installed Python version:
+Product 004 Tests
 
-python --version
-Virtual environment is not active
+The tests cover:
 
-Activate the environment:
-
-.\venv\Scripts\Activate.ps1
-Dependencies are missing
-
-Install them with:
-
-python -m pip install -r requirements.txt
-OpenAPI validation fails
-
-Run:
-
-python -m harness.validate_openapi
-
-Read the reported validation error and fix the OpenAPI contract before running the application tests.
-
-API does not start
-
-Start the API manually:
-
-python -m src.app
-
-Check the terminal output for the startup error.
-
-Tests fail
-
-Run the tests with verbose output:
-
-python -m pytest -v
-
-The output identifies the failing test.
-
-For the complete clean workflow, run:
-
-.\run-tests.ps1
-Development Workflow
-
-The project follows an OpenAPI-first development approach:
-
-OpenAPI contract
-       |
-       v
-HTTP implementation
-       |
-       v
-Automated HTTP tests
-       |
-       v
+Menu operations
+Customer creation
+Duplicate customer email
+Dining tables
+Reservations
+Oversized reservations
+Duplicate reservations
+Order creation
+Server-side prices
+Server-side totals
+Order retrieval
+Order status transitions
+Customer order history
 OpenAPI contract validation
+Product 004 Canonical Workflow
 
-The goal is to verify the behavior of the real HTTP interface rather than only testing internal Python functions.
+The normal workflow is:
 
-Expected Verification
-
-Before considering the project complete, verify:
-
-[ ] Dependencies installed
-[ ] Database reset works
-[ ] OpenAPI validation passes
-[ ] API starts successfully
-[ ] HTTP tests pass
-[ ] Complete Windows test harness passes
-[ ] Complete test harness can be repeated from a clean database
-[ ] README explains setup
-[ ] README explains database reset
-[ ] README explains how to run the service
-[ ] README explains how to run tests
-[ ] README explains how to inspect the API
-[ ] README explains how to add an endpoint
-
-The recommended final verification command on Windows is:
-
-.\run-tests.ps1
-
-A successful project verification should finish with:
-
-========================================
- TEST RESULT: PASS
-========================================
-
-After pasting it, save the file and run:
-
-```powershell
-.\run-tests.ps1
-
-
-# Product 005 - Generic OpenAPI-to-MCP Gateway
+GET /menu
+      ↓
+POST /customers
+      ↓
+GET /tables
+      ↓
+POST /reservations
+      ↓
+POST /orders
+      ↓
+GET /orders/{id}
+      ↓
+PATCH /orders/{id}/status
+      ↓
+GET /customers/{id}/orders
+Product 005 — Generic OpenAPI-to-MCP Gateway
 
 Product 005 exposes the same OpenAPI contract through MCP.
 
-Architecture:
+The architecture is:
 
-OpenAPI -> MCP Discovery -> HTTP -> Product 004 API -> SQLite
+OpenAPI
+   ↓
+MCP Discovery
+   ↓
+MCP Tool Call
+   ↓
+HTTP
+   ↓
+Product 004 REST API
+   ↓
+SQLite
 
-The MCP gateway is generic and contains no restaurant-specific business logic.
+The gateway is generic.
 
-## Product 005 Configuration
+It does not contain Restaurant-specific business logic.
 
-The gateway uses environment variables:
+Product 005 Configuration
+
+The gateway is configured using environment variables.
 
 OPENAPI_FILE
 API_BASE_URL
 MCP_HOST
 MCP_PORT
 
-Defaults:
+Default values:
 
 OPENAPI_FILE=openapi.yaml
 API_BASE_URL=http://127.0.0.1:5000
 MCP_HOST=127.0.0.1
 MCP_PORT=8000
+Start Product 005
 
-## Start the MCP Gateway
-
-Start Product 004 first:
+First start the Product 004 API:
 
 python -m src.app
 
-Then start the gateway:
+Then start the MCP gateway in another terminal:
 
 python -m mcp_gateway.server
 
-MCP endpoint:
+The MCP endpoint is:
 
 http://127.0.0.1:8000/mcp
 
@@ -656,33 +292,11 @@ http://127.0.0.1:8000/docs
 OpenAPI:
 
 http://127.0.0.1:8000/openapi.yaml
+Product 005 MCP Tools
 
-## Product 005 Tests
+The MCP gateway automatically derives tools from the OpenAPI operationId values.
 
-Run all MCP tests:
-
-pytest tests_mcp -v
-
-Or use:
-
-./run-tests-mcp.sh
-
-The tests cover:
-
-- MCP discovery
-- OpenAPI schema fidelity
-- Menu and customer workflow
-- Reservations
-- Orders and server-side totals
-- Order status transitions
-- Customer order history
-- Backend and business failures
-- Backend-down handling
-- Cross-Fresher configuration
-
-## Expected MCP Tools
-
-The gateway automatically derives these tools from OpenAPI operationId:
+Expected tools:
 
 listMenu
 getMenuItem
@@ -695,23 +309,245 @@ getOrder
 updateOrderStatus
 listCustomerOrders
 
-No restaurant-specific MCP tools are handwritten.
+No Restaurant-specific MCP tools are manually implemented.
 
-## Cross-Fresher
+The OpenAPI contract is the source of truth.
 
-To use another Fresher's Product 004 API, change configuration only:
+MCP Discovery
+
+MCP clients can discover the tools using list_tools.
+
+The discovery tests verify that the gateway exposes exactly the required operation IDs.
+
+Run:
+
+pytest tests_mcp\test_discovery.py -v
+Product 005 Workflow Tests
+
+The MCP workflow tests verify the Restaurant workflow through MCP instead of calling the REST API directly.
+
+The workflow includes:
+
+List menu
+Create customer
+List dining tables
+Create reservation
+Get reservation
+Create order
+Verify server-side total
+Get order
+Update order status
+Read customer order history
+
+Run:
+
+pytest tests_mcp\test_workflow.py -v
+Product 005 Failure Tests
+
+The failure tests verify that upstream errors remain visible through the MCP gateway.
+
+Covered failures include:
+
+Invalid MCP arguments
+Missing menu item
+Duplicate customer email
+Oversized reservation
+Duplicate reservation
+Invalid order status transition
+Backend unavailable
+
+Run:
+
+pytest tests_mcp\test_failures.py -v
+
+The gateway must not return fake success when the REST API fails.
+
+Swagger UI
+
+Swagger UI is available at:
+
+http://127.0.0.1:8000/docs
+
+Swagger uses the same:
+
+openapi.yaml
+
+served by the gateway.
+
+The OpenAPI contract can also be viewed directly at:
+
+http://127.0.0.1:8000/openapi.yaml
+Product 005 Tests
+
+Run all MCP tests:
+
+pytest tests_mcp -v
+
+Or:
+
+./run-tests-mcp.sh
+
+The Product 005 test suite covers:
+
+MCP discovery
+OpenAPI operation IDs
+OpenAPI schema-derived inputs
+Menu workflow
+Customer workflow
+Reservations
+Orders
+Server-side prices and totals
+Order status transitions
+Customer order history
+Business errors
+Backend-down handling
+One-Command Scripts
+
+Start the MCP gateway:
+
+./run-mcp.sh
+
+Run the MCP tests:
+
+./run-tests-mcp.sh
+
+Run the Product 004 harness:
+
+./run-tests.sh
+
+On Windows PowerShell:
+
+.\run-tests.ps1
+Generic Gateway Boundary
+
+The MCP gateway is responsible for:
+
+Loading OpenAPI
+MCP tool discovery
+MCP transport
+HTTP forwarding
+Generic error handling
+Configuration
+HTTP logging
+
+The Product 004 backend remains responsible for:
+
+Restaurant database
+SQLite schema
+Seed data
+Restaurant handlers
+Restaurant SQL
+Menu prices
+Order totals
+Reservation rules
+Order state machine
+
+The gateway does not access SQLite directly.
+
+Cross-Fresher Configuration
+
+The gateway can point to another Fresher's Product 004 API using configuration only.
+
+Example:
 
 $env:OPENAPI_FILE="path\to\peer\openapi.yaml"
 $env:API_BASE_URL="http://127.0.0.1:5001"
 
-No mcp_gateway source-code changes are required.
+The gateway source code should not need to be changed.
 
-## Product 005 One-Command Scripts
+The peer's Product 004 API must pass its own Product 004 tests before being used for cross-Fresher testing.
 
-Start gateway:
+Development Workflow
+Product 004
+Update OpenAPI
+      ↓
+Update backend
+      ↓
+Reset database
+      ↓
+Run Product 004 tests
+      ↓
+PASS
+Product 005
+OpenAPI
+   ↓
+MCP Gateway
+   ↓
+MCP Discovery
+   ↓
+HTTP forwarding
+   ↓
+Product 004 API
+   ↓
+SQLite
+Verification
 
-./run-mcp.sh
+Product 004 should be verified from a clean database:
 
-Run MCP tests:
+.\run-tests.ps1
 
-./run-tests-mcp.sh
+Product 005 should be verified with:
+
+pytest tests_mcp -v
+
+Discovery can be checked separately:
+
+pytest tests_mcp\test_discovery.py -v
+
+Workflow:
+
+pytest tests_mcp\test_workflow.py -v
+
+Failures:
+
+pytest tests_mcp\test_failures.py -v
+Important Design Rules
+openapi.yaml is the source of truth.
+MCP tool names come from OpenAPI operationId.
+The gateway forwards MCP calls to the configured REST API.
+The gateway does not contain Restaurant business logic.
+The gateway does not directly access SQLite.
+Product 004 remains the owner of Restaurant behavior.
+No separate MCP schemas are manually maintained.
+No Restaurant-specific MCP tools are handwritten.
+Current Product Structure
+Product 004
+    OpenAPI
+       ↓
+    Flask REST API
+       ↓
+    SQLite
+       ↓
+    Product 004 Harness
+
+Product 005
+    Same OpenAPI
+       ↓
+    Generic MCP Gateway
+       ↓
+    MCP Tools
+       ↓
+    HTTP
+       ↓
+    Product 004 REST API
+       ↓
+    SQLite
+Final Acceptance
+
+The intended final flow is:
+
+Approved OpenAPI Contract
+          ↓
+    Swagger UI
+          ↓
+    MCP Discovery
+          ↓
+      MCP Tools
+          ↓
+    HTTP Forwarding
+          ↓
+   Product 004 API
+          ↓
+       SQLite
+
+The gateway is successful when the same OpenAPI contract drives both Swagger and MCP without adding Restaurant-specific logic to the gateway.
