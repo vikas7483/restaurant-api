@@ -31,34 +31,46 @@ The OpenAPI specification in `openapi.yaml` defines the HTTP interface used by t
 ---
 
 ## Project Structure
-
-```text
 restaurant-api/
-|-- openapi.yaml
-|-- schema.sql
-|-- seed.sql
-|
-|-- src/
-|   |-- app.py
-|   |-- db.py
-|   `-- handlers.py
-|
-|-- harness/
-|   |-- validate_openapi.py
-|   |-- reset_db.py
-|   `-- contract.py
-|
-|-- tests/
-|   |-- test_customers.py
-|   |-- test_menu.py
-|   |-- test_orders.py
-|   |-- test_reservations.py
-|   `-- test_tables.py
-|
-|-- requirements.txt
-|-- run-tests.ps1
-|-- run-tests.sh
-`-- README.md
+│
+├── openapi.yaml
+├── schema.sql
+├── seed.sql
+│
+├── src/
+│   ├── app.py
+│   ├── db.py
+│   └── handlers.py
+│
+├── harness/
+│   ├── validate_openapi.py
+│   ├── reset_db.py
+│   └── contract.py
+│
+├── mcp_gateway/
+│   ├── server.py
+│   ├── config.py
+│   └── swagger.py
+│
+├── tests/
+│   ├── test_customers.py
+│   ├── test_menu.py
+│   ├── test_orders.py
+│   ├── test_reservations.py
+│   └── test_tables.py
+│
+├── tests_mcp/
+│   ├── test_discovery.py
+│   ├── test_workflow.py
+│   ├── test_failures.py
+│   └── test_cross_fresher.py
+│
+├── requirements.txt
+├── run-tests.ps1
+├── run-tests.sh
+├── run-mcp.sh
+├── run-tests-mcp.sh
+└── README.md
 
 Setup
 1. Open the project directory
