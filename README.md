@@ -595,3 +595,111 @@ After pasting it, save the file and run:
 
 ```powershell
 .\run-tests.ps1
+
+
+# Product 005 - Generic OpenAPI-to-MCP Gateway
+
+Product 005 exposes the same OpenAPI contract through MCP.
+
+Architecture:
+
+OpenAPI -> MCP Discovery -> HTTP -> Product 004 API -> SQLite
+
+The MCP gateway is generic and contains no restaurant-specific business logic.
+
+## Product 005 Configuration
+
+The gateway uses environment variables:
+
+OPENAPI_FILE
+API_BASE_URL
+MCP_HOST
+MCP_PORT
+
+Defaults:
+
+OPENAPI_FILE=openapi.yaml
+API_BASE_URL=http://127.0.0.1:5000
+MCP_HOST=127.0.0.1
+MCP_PORT=8000
+
+## Start the MCP Gateway
+
+Start Product 004 first:
+
+python -m src.app
+
+Then start the gateway:
+
+python -m mcp_gateway.server
+
+MCP endpoint:
+
+http://127.0.0.1:8000/mcp
+
+Swagger UI:
+
+http://127.0.0.1:8000/docs
+
+OpenAPI:
+
+http://127.0.0.1:8000/openapi.yaml
+
+## Product 005 Tests
+
+Run all MCP tests:
+
+pytest tests_mcp -v
+
+Or use:
+
+./run-tests-mcp.sh
+
+The tests cover:
+
+- MCP discovery
+- OpenAPI schema fidelity
+- Menu and customer workflow
+- Reservations
+- Orders and server-side totals
+- Order status transitions
+- Customer order history
+- Backend and business failures
+- Backend-down handling
+- Cross-Fresher configuration
+
+## Expected MCP Tools
+
+The gateway automatically derives these tools from OpenAPI operationId:
+
+listMenu
+getMenuItem
+createCustomer
+listDiningTables
+createReservation
+getReservation
+createOrder
+getOrder
+updateOrderStatus
+listCustomerOrders
+
+No restaurant-specific MCP tools are handwritten.
+
+## Cross-Fresher
+
+To use another Fresher's Product 004 API, change configuration only:
+
+$env:OPENAPI_FILE="path\to\peer\openapi.yaml"
+$env:API_BASE_URL="http://127.0.0.1:5001"
+
+No mcp_gateway source-code changes are required.
+
+## Product 005 One-Command Scripts
+
+Start gateway:
+
+./run-mcp.sh
+
+Run MCP tests:
+
+./run-tests-mcp.sh
